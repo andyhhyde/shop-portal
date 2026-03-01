@@ -12,6 +12,7 @@ import {
   Users,
   LogOut,
   MessageSquarePlus,
+  X,
 } from "lucide-react";
 
 const navItems = [
@@ -27,15 +28,20 @@ const ownerItems = [
   { href: "/artists", label: "Artists", icon: Users },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isOwner = (session?.user as { role?: string })?.role === "owner";
 
-  return (
-    <aside className="w-60 min-h-screen bg-zinc-900 border-r border-zinc-800 flex flex-col">
+  const sidebarContent = (
+    <aside className="w-64 h-full bg-zinc-900 border-r border-zinc-800 flex flex-col">
       {/* Logo */}
-      <div className="p-5 border-b border-zinc-800">
+      <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🗡️</span>
           <div>
@@ -43,23 +49,32 @@ export default function Sidebar() {
             <p className="text-zinc-500 text-xs">{session?.user?.name}</p>
           </div>
         </div>
+        {/* Close button — mobile only */}
+        <button
+          onClick={onClose}
+          className="md:hidden p-1 text-zinc-500 hover:text-white"
+          aria-label="Close menu"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              onClick={onClose}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 active
                   ? "bg-red-600 text-white"
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
-              <Icon size={16} />
+              <Icon size={18} />
               {label}
             </Link>
           );
@@ -76,13 +91,14 @@ export default function Sidebar() {
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  onClick={onClose}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     active
                       ? "bg-red-600 text-white"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
                 >
-                  <Icon size={16} />
+                  <Icon size={18} />
                   {label}
                 </Link>
               );
@@ -95,12 +111,36 @@ export default function Sidebar() {
       <div className="p-3 border-t border-zinc-800">
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
         >
-          <LogOut size={16} />
+          <LogOut size={18} />
           Sign Out
         </button>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop: always visible */}
+      <div className="hidden md:flex min-h-screen">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile: slide-in overlay */}
+      {open && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={onClose}
+          />
+          {/* Drawer */}
+          <div className="relative z-10 h-full">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
