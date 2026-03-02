@@ -432,7 +432,83 @@ export default function ArtistsPage() {
                 Configure when each artist receives rent reminders. Reminders repeat until rent is marked paid.
               </p>
             </div>
-            <table className="w-full text-sm">
+
+            {/* Mobile cards (hidden on md+) */}
+            <div className="md:hidden divide-y divide-zinc-800">
+              {artists.map((a) => {
+                const s = notifSettings[a.id] ?? { enabled: true, daysBeforeDue: 7, recurringEvery: 3 };
+                const saving = savingNotif[a.id] ?? false;
+                return (
+                  <div key={a.id} className="px-5 py-4 space-y-3">
+                    {/* Artist name + toggle on one row */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-medium">{a.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateNotif(a.id, "enabled", !s.enabled)}
+                        className={`relative inline-flex w-10 h-5 rounded-full transition-colors focus:outline-none ${
+                          s.enabled ? "bg-red-600" : "bg-zinc-700"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
+                            s.enabled ? "left-5" : "left-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    {/* Two number inputs in a 2-col grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-zinc-400 text-xs">First Notice</label>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            value={s.daysBeforeDue}
+                            onChange={(e) =>
+                              updateNotif(a.id, "daysBeforeDue", Math.max(1, parseInt(e.target.value) || 1))
+                            }
+                            min="1"
+                            max="30"
+                            disabled={!s.enabled}
+                            className="w-14 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-40"
+                          />
+                          <span className="text-zinc-500 text-xs">days before</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-zinc-400 text-xs">Repeat Every</label>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            value={s.recurringEvery}
+                            onChange={(e) =>
+                              updateNotif(a.id, "recurringEvery", Math.max(1, parseInt(e.target.value) || 1))
+                            }
+                            min="1"
+                            max="14"
+                            disabled={!s.enabled}
+                            className="w-14 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-40"
+                          />
+                          <span className="text-zinc-500 text-xs">days</span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Save button */}
+                    <button
+                      onClick={() => handleSaveNotifSettings(a.id)}
+                      disabled={saving}
+                      className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white text-sm px-3 py-2 rounded-lg transition-colors font-medium"
+                    >
+                      {saving ? "Saving…" : "Save"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table (hidden below md) */}
+            <table className="hidden md:table w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-800">
                   <th className="text-left px-5 py-3 text-zinc-400 font-medium">Artist</th>
