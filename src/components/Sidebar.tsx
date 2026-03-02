@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -43,7 +44,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       {/* Logo */}
       <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">🗡️</span>
+          <Image src="/STC_Logo.png" alt="STC Logo" width={36} height={36} className="rounded" />
           <div>
             <p className="font-bold text-white text-sm leading-tight">Shop Portal</p>
             <p className="text-zinc-500 text-xs">{session?.user?.name}</p>
