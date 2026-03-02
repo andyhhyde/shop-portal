@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -36,7 +37,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo / Header */}
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🗡️</div>
+          <div className="flex justify-center mb-3">
+            <Image src="/STC_Logo.png" alt="STC Logo" width={96} height={96} className="rounded-lg" />
+          </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Shop Portal</h1>
           <p className="text-zinc-400 text-sm mt-1">Sign in to your account</p>
         </div>
