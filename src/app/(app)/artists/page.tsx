@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Plus, Users, Check, X, Eye, Pencil, Trash2, Bell } from "lucide-react";
+import { Plus, Users, Check, X, Eye, Pencil, Trash2, Bell, DollarSign } from "lucide-react";
 
-type Artist = { id: string; name: string; email: string; role: string; phone: string | null; createdAt: string };
+type Artist = { id: string; name: string; email: string; role: string; phone: string | null; rentAmount: number; createdAt: string };
 type NotifSettings = { enabled: boolean; daysBeforeDue: number; recurringEvery: number };
 type NotifUser = { id: string; notificationSettings: NotifSettings | null };
 type ReceiptCredit = {
@@ -43,6 +43,8 @@ export default function ArtistsPage() {
   const [editError, setEditError] = useState("");
   const [notifSettings, setNotifSettings] = useState<Record<string, NotifSettings>>({});
   const [savingNotif, setSavingNotif] = useState<Record<string, boolean>>({});
+  const [rentAmounts, setRentAmounts] = useState<Record<string, number>>({});
+  const [savingRent, setSavingRent] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!isOwner && session) router.push("/dashboard");
@@ -54,7 +56,11 @@ export default function ArtistsPage() {
       fetch("/api/receipt-credits"),
       fetch("/api/notification-settings"),
     ]);
-    setArtists(await artistsRes.json());
+    const artistsData: Artist[] = await artistsRes.json();
+    setArtists(artistsData);
+    const rentMap: Record<string, number> = {};
+    for (const a of artistsData) rentMap[a.id] = a.rentAmount ?? 0;
+    setRentAmounts(rentMap);
     setCredits(await creditsRes.json());
     const notifData: NotifUser[] = await notifRes.json();
     const map: Record<string, NotifSettings> = {};
@@ -154,6 +160,16 @@ export default function ArtistsPage() {
       body: JSON.stringify(notifSettings[userId]),
     });
     setSavingNotif((prev) => ({ ...prev, [userId]: false }));
+  }
+
+  async function handleSaveRentAmount(artistId: string) {
+    setSavingRent((prev) => ({ ...prev, [artistId]: true }));
+    await fetch(`/api/artists/${artistId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rentAmount: rentAmounts[artistId] ?? 0 }),
+    });
+    setSavingRent((prev) => ({ ...prev, [artistId]: false }));
   }
 
   const flaggedCount = credits.filter((c) => c.status === "flagged").length;
@@ -420,6 +436,99 @@ export default function ArtistsPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Monthly Rent Amounts */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-zinc-800">
+              <h2 className="font-semibold text-white flex items-center gap-2">
+                <DollarSign size={15} className="text-zinc-400" /> Monthly Rent
+              </h2>
+              <p className="text-zinc-500 text-xs mt-0.5">
+                Set the booth rent amount each artist owes per month.
+              </p>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-zinc-800">
+              {artists.map((a) => {
+                const amount = rentAmounts[a.id] ?? 0;
+                const saving = savingRent[a.id] ?? false;
+                return (
+                  <div key={a.id} className="px-5 py-4 space-y-3">
+                    <span className="text-white font-medium">{a.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-400 text-sm">$</span>
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) =>
+                          setRentAmounts((prev) => ({ ...prev, [a.id]: parseFloat(e.target.value) || 0 }))
+                        }
+                        min="0"
+                        step="0.01"
+                        className="w-28 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                      <span className="text-zinc-500 text-xs">/month</span>
+                    </div>
+                    <button
+                      onClick={() => handleSaveRentAmount(a.id)}
+                      disabled={saving}
+                      className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white text-sm px-3 py-2 rounded-lg transition-colors font-medium"
+                    >
+                      {saving ? "Saving…" : "Save"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table */}
+            <table className="hidden md:table w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left px-5 py-3 text-zinc-400 font-medium">Artist</th>
+                  <th className="text-left px-5 py-3 text-zinc-400 font-medium">Monthly Rent</th>
+                  <th className="px-5 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {artists.map((a) => {
+                  const amount = rentAmounts[a.id] ?? 0;
+                  const saving = savingRent[a.id] ?? false;
+                  return (
+                    <tr key={a.id} className="border-b border-zinc-800 last:border-0 hover:bg-zinc-800/30">
+                      <td className="px-5 py-3 text-white font-medium">{a.name}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-zinc-400">$</span>
+                          <input
+                            type="number"
+                            value={amount}
+                            onChange={(e) =>
+                              setRentAmounts((prev) => ({ ...prev, [a.id]: parseFloat(e.target.value) || 0 }))
+                            }
+                            min="0"
+                            step="0.01"
+                            className="w-28 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                          />
+                          <span className="text-zinc-500 text-xs">/month</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <button
+                          onClick={() => handleSaveRentAmount(a.id)}
+                          disabled={saving}
+                          className="bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-medium"
+                        >
+                          {saving ? "Saving…" : "Save"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           {/* Notification Settings */}

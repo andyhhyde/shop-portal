@@ -14,6 +14,7 @@ model User {
   password      String
   role          String       @default("artist")
   phone         String?
+  rentAmount    Float        @default(0)
   createdAt     DateTime     @default(now())
 
   eventRSVPs       EventRSVP[]

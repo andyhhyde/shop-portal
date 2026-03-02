@@ -14,7 +14,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { name, email, phone, role, password } = await req.json();
+  const { name, email, phone, role, password, rentAmount } = await req.json();
 
   if (email) {
     const existing = await prisma.user.findFirst({ where: { email, NOT: { id } } });
@@ -27,11 +27,12 @@ export async function PATCH(
   if (phone !== undefined) data.phone = phone || null;
   if (role) data.role = role;
   if (password) data.password = await bcrypt.hash(password, 10);
+  if (rentAmount !== undefined) data.rentAmount = parseFloat(rentAmount) || 0;
 
   const user = await prisma.user.update({
     where: { id },
     data,
-    select: { id: true, name: true, email: true, role: true, phone: true, createdAt: true },
+    select: { id: true, name: true, email: true, role: true, phone: true, rentAmount: true, createdAt: true },
   });
 
   return NextResponse.json(user);

@@ -8,7 +8,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, phone: true, createdAt: true },
+    select: { id: true, name: true, email: true, role: true, phone: true, rentAmount: true, createdAt: true },
     orderBy: { name: "asc" },
   });
 
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   const hashed = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
     data: { name, email, password: hashed, phone: phone || null, role: role || "artist" },
-    select: { id: true, name: true, email: true, role: true, phone: true, createdAt: true },
+    select: { id: true, name: true, email: true, role: true, phone: true, rentAmount: true, createdAt: true },
   });
 
   return NextResponse.json(user);

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { format, addMonths, startOfMonth } from "date-fns";
 import { Plus, Check, DollarSign, Receipt, Upload, X, Eye, AlertTriangle } from "lucide-react";
 
-type Artist = { id: string; name: string; email: string };
+type Artist = { id: string; name: string; email: string; rentAmount: number };
 type Payment = {
   id: string;
   period: string;
@@ -186,7 +186,7 @@ export default function BoothRentalPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-zinc-400 mb-1">Artist *</label>
-              <select value={form.userId} onChange={(e) => setForm({ ...form, userId: e.target.value })} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+              <select value={form.userId} onChange={(e) => { const a = artists.find(x => x.id === e.target.value); setForm({ ...form, userId: e.target.value, amount: a?.rentAmount ? String(a.rentAmount) : form.amount }); }} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
                 <option value="">Select artist…</option>
                 {artists.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
