@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { format, addMonths, startOfMonth } from "date-fns";
-import { Plus, Check, DollarSign, Receipt, Upload, X, Eye, AlertTriangle } from "lucide-react";
+import { Plus, Check, DollarSign, Receipt, Upload, X, Eye, AlertTriangle, Zap } from "lucide-react";
 
-type Artist = { id: string; name: string; email: string; rentAmount: number };
+type Artist = { id: string; name: string; email: string; role: string; rentAmount: number };
 type Payment = {
   id: string;
   period: string;
@@ -47,12 +47,16 @@ export default function BoothRentalPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showCreditForm, setShowCreditForm] = useState(false);
+  const [showGenerateForm, setShowGenerateForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingCredit, setSavingCredit] = useState(false);
-  const [applyingCredit, setApplyingCredit] = useState<string | null>(null); // paymentId being applied
+  const [generating, setGenerating] = useState(false);
+  const [applyingCredit, setApplyingCredit] = useState<string | null>(null);
   const [form, setForm] = useState({ userId: "", amount: "", dueDate: "", period: "", notes: "" });
   const periodOptions = getPeriodOptions();
   const currentPeriod = format(startOfMonth(new Date()), "MMMM yyyy");
+  const defaultDueDate = format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1), "yyyy-MM-dd");
+  const [generateForm, setGenerateForm] = useState({ period: currentPeriod, dueDate: defaultDueDate });
   const [creditForm, setCreditForm] = useState({
     forUserId: "",
     period: currentPeriod,
@@ -74,6 +78,25 @@ export default function BoothRentalPage() {
   }
 
   useEffect(() => { loadData(); }, []);
+
+  async function handleGenerate(e: React.FormEvent) {
+    e.preventDefault();
+    setGenerating(true);
+    const res = await fetch("/api/booth-payments/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(generateForm),
+    });
+    const data = await res.json();
+    setShowGenerateForm(false);
+    setGenerating(false);
+    if (data.created === 0) {
+      alert(`All renters already have a payment record for ${generateForm.period}.`);
+    } else {
+      alert(`Created ${data.created} payment record${data.created !== 1 ? "s" : ""}${data.skipped > 0 ? ` (${data.skipped} already existed)` : ""}.`);
+    }
+    loadData();
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -141,12 +164,20 @@ export default function BoothRentalPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Booth Rental</h1>
-          <p className="text-zinc-400 text-sm mt-1">Payment tracking per artist</p>
+          <p className="text-zinc-400 text-sm mt-1">Payment tracking for all renters</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {isOwner && (
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => { setShowGenerateForm(!showGenerateForm); setShowForm(false); }}
+              className="flex items-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            >
+              <Zap size={16} /> Generate Monthly
+            </button>
+          )}
+          {isOwner && (
+            <button
+              onClick={() => { setShowForm(!showForm); setShowGenerateForm(false); }}
               className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
             >
               <Plus size={16} /> Add Payment
@@ -177,6 +208,35 @@ export default function BoothRentalPage() {
             <p className="text-xs text-zinc-400 mt-1">Collected</p>
           </div>
         </div>
+      )}
+
+      {/* Generate Monthly Rent Form */}
+      {showGenerateForm && isOwner && (
+        <form onSubmit={handleGenerate} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-white">Generate Monthly Rent</h2>
+              <p className="text-zinc-400 text-xs mt-0.5">Creates a payment record for every person with a monthly rent amount set, skipping anyone who already has one for this period.</p>
+            </div>
+            <button type="button" onClick={() => setShowGenerateForm(false)} className="text-zinc-500 hover:text-zinc-300"><X size={16} /></button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Period *</label>
+              <select value={generateForm.period} onChange={(e) => setGenerateForm({ ...generateForm, period: e.target.value })} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+                {periodOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Due Date *</label>
+              <input type="date" value={generateForm.dueDate} onChange={(e) => setGenerateForm({ ...generateForm, dueDate: e.target.value })} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button type="submit" disabled={generating} className="bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">{generating ? "Generating…" : "Generate"}</button>
+            <button type="button" onClick={() => setShowGenerateForm(false)} className="text-zinc-400 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors">Cancel</button>
+          </div>
+        </form>
       )}
 
       {/* Add Payment Form (owner only) */}
@@ -229,11 +289,11 @@ export default function BoothRentalPage() {
           <div className="grid grid-cols-2 gap-4">
             {isOwner && (
               <div className="col-span-2">
-                <label className="block text-xs text-zinc-400 mb-1">Submitting for Artist *</label>
+                <label className="block text-xs text-zinc-400 mb-1">Submitting for *</label>
                 <select value={creditForm.forUserId} onChange={(e) => setCreditForm({ ...creditForm, forUserId: e.target.value })} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
-                  <option value="">Select artist…</option>
-                  {artists.filter((a) => (a as Artist & { role?: string }).role !== "owner").map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
+                  <option value="">Select person…</option>
+                  {artists.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name} ({a.role})</option>
                   ))}
                 </select>
               </div>
