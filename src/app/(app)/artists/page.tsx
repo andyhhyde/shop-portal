@@ -445,7 +445,7 @@ export default function ArtistsPage() {
                 <DollarSign size={15} className="text-zinc-400" /> Monthly Rent
               </h2>
               <p className="text-zinc-500 text-xs mt-0.5">
-                Set the booth rent amount each artist owes per month.
+                Set the booth rent amount each person owes per month. Owners typically pay a reduced rate.
               </p>
             </div>
 
@@ -456,7 +456,12 @@ export default function ArtistsPage() {
                 const saving = savingRent[a.id] ?? false;
                 return (
                   <div key={a.id} className="px-5 py-4 space-y-3">
-                    <span className="text-white font-medium">{a.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-medium">{a.name}</span>
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        a.role === "owner" ? "bg-red-900 text-red-300" : "bg-zinc-800 text-zinc-300"
+                      }`}>{a.role}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-zinc-400 text-sm">$</span>
                       <input
@@ -487,7 +492,8 @@ export default function ArtistsPage() {
             <table className="hidden md:table w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-800">
-                  <th className="text-left px-5 py-3 text-zinc-400 font-medium">Artist</th>
+                  <th className="text-left px-5 py-3 text-zinc-400 font-medium">Name</th>
+                  <th className="text-left px-5 py-3 text-zinc-400 font-medium">Role</th>
                   <th className="text-left px-5 py-3 text-zinc-400 font-medium">Monthly Rent</th>
                   <th className="px-5 py-3"></th>
                 </tr>
@@ -499,6 +505,11 @@ export default function ArtistsPage() {
                   return (
                     <tr key={a.id} className="border-b border-zinc-800 last:border-0 hover:bg-zinc-800/30">
                       <td className="px-5 py-3 text-white font-medium">{a.name}</td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                          a.role === "owner" ? "bg-red-900 text-red-300" : "bg-zinc-800 text-zinc-300"
+                        }`}>{a.role}</span>
+                      </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           <span className="text-zinc-400">$</span>
