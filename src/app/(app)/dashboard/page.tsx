@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
-import { CalendarDays, CreditCard, Package, AlertTriangle, Car } from "lucide-react";
+import { CalendarDays, CreditCard, Package, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import ParkingWidget from "@/components/ParkingWidget";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -41,26 +42,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Parking indicator */}
-      <div className={`flex items-center gap-4 rounded-xl border p-4 ${
-        parkingSpot?.occupied
-          ? "bg-red-950 border-red-800"
-          : "bg-green-950 border-green-800"
-      }`}>
-        <Car size={22} className={parkingSpot?.occupied ? "text-red-400" : "text-green-400"} />
-        <div className="flex-1">
-          <p className={`font-semibold text-sm ${parkingSpot?.occupied ? "text-red-300" : "text-green-300"}`}>
-            Rear Stall — {parkingSpot?.occupied ? "OCCUPIED" : "FREE"}
-          </p>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            {parkingSpot?.lastUpdated
-              ? `Updated ${format(new Date(parkingSpot.lastUpdated), "h:mm a")}`
-              : "No data yet"}
-          </p>
-        </div>
-        <div className={`w-3 h-3 rounded-full ${
-          parkingSpot?.occupied ? "bg-red-500" : "bg-green-500"
-        }`} />
-      </div>
+      <ParkingWidget initial={{ occupied: parkingSpot?.occupied ?? false, lastUpdated: parkingSpot?.lastUpdated?.toISOString() ?? null }} />
 
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
