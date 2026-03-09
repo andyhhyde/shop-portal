@@ -142,3 +142,10 @@ model PushSubscription {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model ParkingSpot {
+  id          String   @id @default(cuid())
+  spotId      String   @unique
+  occupied    Boolean  @default(false)
+  lastUpdated DateTime @default(now())
+}

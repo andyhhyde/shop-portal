@@ -1,0 +1,79 @@
+PARKING SENSOR PROJECT BRIEF
+==============================
+Date: March 8, 2026
+
+PROJECT OVERVIEW
+----------------
+This project involves building a real-time parking space indicator using an ESP32
+microcontroller and an HC-SR04 ultrasonic distance sensor. The sensor will monitor
+whether the shop's rear parking stall is occupied or free, and report that status
+to a web application deployed on Vercel (Next.js / Neon PostgreSQL).
+
+CONTEXT
+-------
+The tattoo shop has 2 parking spaces located in a position where occupancy is not
+visible until you are already committed to the driveway. The goal is to display
+a simple real-time indicator (occupied / free) inside the shop's internal management
+app so staff and artists can check at a glance before directing clients to park there.
+
+HARDWARE
+--------
+- Microcontroller: ESP32 (any standard dev board)
+- Sensor: HC-SR04 ultrasonic distance sensor
+- Connectivity: Shop WiFi (WPA2)
+- Power: TBD — mains power or solar panel (solar preferred as the unit will be
+  mounted outdoors where a mains power source is not readily available)
+
+WIRING (as coded in firmware)
+------------------------------
+- HC-SR04 TRIG  →  ESP32 GPIO 5
+- HC-SR04 ECHO  →  ESP32 GPIO 18
+- VCC → 5V, GND → GND
+
+FIRMWARE SUMMARY
+----------------
+An Arduino sketch has already been written. Key behaviours:
+- Polls the sensor every 5 seconds
+- If measured distance is less than 200cm, the stall is considered OCCUPIED
+- Only sends an HTTP POST to the app API when status CHANGES (free → occupied or
+  vice versa), to avoid hammering the serverless endpoint
+- Authenticates with the app using a shared secret passed as the request header:
+    x-api-key: <your-secret-key>
+- POST body format:
+    { "spotId": "rear-stall", "occupied": true|false }
+- Target endpoint: https://<your-vercel-app>.vercel.app/api/parking
+
+RECOMMENDED SENSOR PLACEMENT
+------------------------------
+Mount the sensor horizontally across the stall entrance rather than pointing
+downward from above. This avoids interference from rain, puddles, or debris on
+the ground, and gives a clean line-of-sight read across the opening.
+
+APP INTEGRATION (to be built on the app side)
+----------------------------------------------
+The following work still needs to be completed in the Next.js application:
+1. Prisma schema — add a ParkingSpot model to store current status and last updated time
+2. API route — POST /api/parking (receives ESP32 updates, validates API key)
+              GET  /api/parking (serves current status to the UI)
+3. Dashboard indicator — small widget showing GREEN (free) or RED (occupied)
+   with a last-updated timestamp
+
+The app is built with:
+- Next.js (App Router)
+- Prisma ORM
+- Neon PostgreSQL (serverless)
+- Deployed on Vercel
+
+OUTSTANDING DECISIONS
+----------------------
+- Final power solution for the ESP32/sensor unit (solar panel setup TBD)
+- API key value to be decided and added to both the ESP32 firmware and the
+  app's Vercel environment variables (as PARKING_API_KEY)
+- Sensor threshold (200cm) may need tuning once physically installed
+
+HANDOFF NOTE
+-------------
+The Arduino firmware sketch is complete and ready for hardware testing.
+Once the ESP32 is wired, powered, and reading distances correctly in the
+Serial Monitor, the app-side work (schema, API route, dashboard widget) can
+be built out and the two sides connected.
