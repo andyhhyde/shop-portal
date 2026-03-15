@@ -7,7 +7,19 @@ import { format } from "date-fns";
 type ParkingSpot = {
   occupied: boolean;
   lastUpdated: string | null;
+  batteryV?: number | null;
 };
+
+// LiPo range: 3.0V (empty) → 4.2V (full)
+function batteryPercent(v: number): number {
+  return Math.round(Math.min(100, Math.max(0, ((v - 3.0) / (4.2 - 3.0)) * 100)));
+}
+
+function batteryColor(pct: number): string {
+  if (pct > 60) return "text-green-400";
+  if (pct > 25) return "text-yellow-400";
+  return "text-red-400";
+}
 
 export default function ParkingWidget({ initial }: { initial: ParkingSpot }) {
   const [spot, setSpot] = useState<ParkingSpot>(initial);
@@ -43,6 +55,14 @@ export default function ParkingWidget({ initial }: { initial: ParkingSpot }) {
             ? `Updated ${format(new Date(spot.lastUpdated), "h:mm a")}`
             : "No data yet"}
         </p>
+        {spot.batteryV != null && (() => {
+          const pct = batteryPercent(spot.batteryV);
+          return (
+            <p className={`text-xs mt-0.5 ${batteryColor(pct)}`}>
+              Battery {pct}% ({spot.batteryV.toFixed(2)}V)
+            </p>
+          );
+        })()}
       </div>
       <div className={`w-3 h-3 rounded-full animate-pulse ${
         spot.occupied ? "bg-red-500" : "bg-green-500"

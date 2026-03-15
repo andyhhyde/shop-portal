@@ -147,5 +147,6 @@ model ParkingSpot {
   id          String   @id @default(cuid())
   spotId      String   @unique
   occupied    Boolean  @default(false)
+  batteryV    Float?   // last reported battery voltage from solar/LiPo sensor
   lastUpdated DateTime @default(now())
 }
