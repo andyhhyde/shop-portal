@@ -10,9 +10,9 @@ type ParkingSpot = {
   batteryV?: number | null;
 };
 
-// LiPo range: 3.0V (empty) → 4.2V (full)
+// LiFePO4 range: 2.8V (empty) → 3.6V (full)
 function batteryPercent(v: number): number {
-  return Math.round(Math.min(100, Math.max(0, ((v - 3.0) / (4.2 - 3.0)) * 100)));
+  return Math.round(Math.min(100, Math.max(0, ((v - 2.8) / (3.6 - 2.8)) * 100)));
 }
 
 function batteryColor(pct: number): string {
